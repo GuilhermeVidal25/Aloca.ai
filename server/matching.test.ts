@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { rank, matchCascade, monthsFor, Requirements, type Profile } from './matching.ts';
+const r = Requirements.parse({ title: 'Backend', mandatory_skills: ['Node.js'], desired_skills: [], min_availability: 50, start_month: '2026-11', duration_months: 3, seniority: null });
+const p: Profile = { id: '1', name: 'Exemplo', seniority: 'Pleno', skills: ['Node'], source: 'internal', months: [{ month: '2026-11', free: 80 }, { month: '2026-12', free: 50 }, { month: '2027-01', free: 60 }] };
+test('período cruza ano sem perder meses', () => assert.deepEqual(monthsFor(r), ['2026-11','2026-12','2027-01']));
+test('aceita o limite exato e equivalência Node', () => assert.equal(rank([p], r)[0].capacity, 50));
+test('média suficiente não compensa mês sem capacidade', () => assert.equal(rank([{ ...p, months: p.months.map((m, i) => ({ ...m, free: i === 1 ? 40 : 100 })) }], r).length, 0));
+test('exclui skill obrigatória ausente', () => assert.equal(rank([p], { ...r, mandatory_skills: ['PostgreSQL'] }).length, 0));
+test('exclui período incompleto', () => assert.equal(rank([{ ...p, months: p.months.slice(1) }], r).length, 0));
+test('prioriza interno e usa externo apenas se necessário', () => { const ext: Profile = { ...p, id: '2', source: 'external', availability: 100, months: [] }; assert.equal(matchCascade([p], [ext], r).source, 'internal'); assert.equal(matchCascade([], [ext], r).candidates[0].id, '2'); });
+test('talento sem disponibilidade confirmada é excluído', () => assert.equal(rank([{ ...p, source: 'external', availability: null }], r).length, 0));
