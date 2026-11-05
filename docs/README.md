@@ -17,7 +17,7 @@ Referência da implementação do MVP, revisada em 05/11/2026. A interface é de
 
 Implementados: chat com extração Gemini, critérios editáveis, consulta prioritária interna, fallback externo, justificativas determinísticas, histórico e pedidos pendentes persistidos. PostgreSQL é o modo normal; snapshot SQL é uma opção explícita.
 
-Não implementados: autenticação por pessoa, autorização por perfil, notificações reais, aprovação do GP, efetivação/reserva de capacidade, sincronização com SGD/Jira/Teams/Slack, embeddings e previsão de produtividade. A interface roda localmente. Não publicar esse servidor na internet sem preparar autenticação, autorização e operação adequadas.
+Implementados: login por pessoa, autorização por perfil, histórico segregado para TI, gestão de usuários e validação administrativa pelo GP. Não implementados: notificações reais, efetivação/reserva de capacidade, sincronização corporativa, embeddings ou previsão de produtividade. A interface continua local. Para implantação corporativa, preparar HTTPS, SSO, recuperação de acesso e operação adequada.
 
 Os testes automatizados descritos não enviam mensagens aos provedores de IA. Os testes de integração opcionais usam o banco local do desafio e removem apenas os registros temporários que criaram.
 
@@ -26,3 +26,5 @@ Os testes automatizados descritos não enviam mensagens aos provedores de IA. Os
 O PDF entregue já está pronto. Para regenerá-lo, instale Python 3 e as dependências de `requirements-docs.txt`. No Windows: `py -m pip install -r requirements-docs.txt` e `py scripts/build-manual.py`. Em Linux/macOS: `python3 -m pip install -r requirements-docs.txt` e `python3 scripts/build-manual.py`. Recomenda-se ambiente virtual.
 
 O gerador usa as capturas em `docs/assets/` e a medição versionada em `docs/coverage-summary.json`. Depois de mudar o software, atualize a medição e o conteúdo antes de regenerar. Para conferir a diagramação, renderize as páginas com Poppler e revise as imagens, não apenas a extração de texto.
+
+A revisão atual de acesso, validação e recomendações está em [Acesso e evidências](acesso-e-evidencias.md). O PDF e as capturas anteriores ainda representam a versão sem autenticação.

@@ -1,6 +1,6 @@
 # API local do Aloca.ai
 
-URL: `http://localhost:3000/api`. O servidor escuta apenas na máquina local. Os endpoints não possuem autenticação multiusuário e não devem ser expostos publicamente.
+URL: `http://localhost:3000/api`. O servidor escuta apenas na máquina local. Os endpoints de negócio exigem sessão autenticada. O serviço continua preparado para demonstração local.
 
 ## Contrato de requisitos
 
@@ -37,7 +37,7 @@ Nenhum erro de consulta interna provoca fallback externo. O fallback só ocorre 
 
 Fonte normal: PostgreSQL. Histórico e pedidos ficam no schema `"AlocaAI"`, separado de `"InHire"`. Migrações são transacionais e não alteram as tabelas do desafio. O arquivo legado `data/history.json` é importado de forma idempotente na inicialização, sem apagá-lo. Os registros antigos continuam no banco; o limite de 100 vale apenas para a listagem.
 
-O modo snapshot é explícito, via `SQL_DUMP_PATH`, com persistência em arquivo; não há fallback silencioso entre fontes. `Iniciar.command --snapshot` ativa esse modo para demonstração offline.
+O modo snapshot é explícito, via `SQL_DUMP_PATH`, e muda somente a fonte dos perfis. Autenticação, histórico e solicitações continuam em PostgreSQL; esse modo não é mais independente do banco.
 
 ## Erros
 

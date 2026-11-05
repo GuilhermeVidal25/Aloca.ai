@@ -1,59 +1,35 @@
-# Estratégia de testes e cobertura
+# Testes e cobertura
 
-Medição de 05/11/2026, Node.js 24, macOS. Relatório reproduzível com c8 e V8; fonte resumida em [coverage-summary.json](coverage-summary.json). Cobertura descreve execução de código, não garante ausência de falhas nem qualidade de recomendação.
+## Resultado desta revisão
 
-## Resultado
-
-| Execução | Testes | Linhas / instruções | Funções | Ramificações |
+| Execução | Resultado | Linhas/instruções | Funções | Ramificações |
 |---|---|---|---|---|
-| Sem PostgreSQL | 34 aprovados, 1 ignorado | 95,56% | 80,95% | 93,57% |
-| Com PostgreSQL real | 35 aprovados, nenhum ignorado | 100% | 100% | 95,49% |
+| Sem PostgreSQL | 39 aprovados, 2 ignorados | 83,33% | 75,47% | 89,66% |
+| Com PostgreSQL real | 41 aprovados, nenhum ignorado | 100% | 100% | 92,58% |
 
-O escopo inclui sete módulos: IA, API, database, dump, erros, matching e storage. Não inclui frontend React, CSS, arquivos de testes, bootstrap `server/index.ts`, o roteiro `verify-postgres.ts`, scripts de inicialização ou gerador do PDF. As instruções/linhas são contabilizadas pelo V8 nos arquivos TypeScript, que possuem trechos compactos; não representam porcentagem de cenários de negócio. Os percentuais diferentes entre suítes refletem também as funções carregadas e exercidas.
+Métricas medidas por c8 sobre nove módulos de backend: ai, app, auth, database, dump, errors, evidence, matching e storage. Entrypoint, verificador de integração, testes e frontend não entram nessa cobertura. Cobertura de linhas não equivale a homologação completa.
 
-## Módulos na suíte integrada
+## Executar
 
-| Módulo | Linhas | Ramificações | Funções |
-|---|---|---|---|
-| ai.ts | 100% | 97.05% | 100% |
-| app.ts | 100% | 97.67% | 100% |
-| database.ts | 100% | 93.33% | 100% |
-| dump.ts | 100% | 93.75% | 100% |
-| errors.ts | 100% | 100% | 100% |
-| matching.ts | 100% | 100% | 100% |
-| storage.ts | 100% | 87.09% | 100% |
+- `npm test`: suíte sem banco, com duas integrações ignoradas.
+- `npm run test:coverage`: mesma suíte com relatório; não impõe pisos, pois não exercita as integrações PostgreSQL de autenticação e persistência.
+- `npm run test:coverage:integration`: exige DATABASE_URL e dump oficial, aplica os pisos globais de 90% linhas/instruções, 90% ramificações e 80% funções.
+- `npm run build`: valida TypeScript e compila a interface.
 
-## O que é verificado
+Use ALOCA_ENV_FILE para apontar ao arquivo externo de configuração. Abra coverage/index.html para o relatório; coverage/lcov.info e coverage/coverage-summary.json contêm resultados estruturados. Cada execução substitui os relatórios. Não execute duas coberturas simultaneamente.
 
-- Matching: obrigatórias, senioridade, equivalências, desejáveis, ordenação, limite, sobre-alocação, dados incompletos e mudança de ano.
-- IA com transporte simulado: schema, cabeçalhos, confidencialidade da chave, ausência de skills, respostas inválidas/incompletas/bloqueadas, quota, autenticação, timeout e seleção de provedor. Nenhum teste automatizado chama a API comercial.
-- HTTP: validação, JSON, corpo máximo, origem, status, fallback, falha interna sem fallback indevido, persistência, revalidação e idempotência de pedidos concorrentes.
-- Snapshot sintético: COPY, campos nulos/escapados, tabelas relacionadas, inativos, somatório e competência sem cobertura.
-- PostgreSQL local: migração/importação idempotentes, equivalência com dump em cenários interno/externo e seis inserções simultâneas com um único pedido. Só os registros temporários com UUIDs do teste são removidos.
+A integração de acesso cria um banco temporário com nome aleatório, cadastra apenas contas fictícias e remove esse banco ao terminar; requer permissão CREATE DATABASE no PostgreSQL de desenvolvimento. Nunca use credenciais de produção para testes. A integração da base valida consultas e persistência em transação, preservando InHire.
 
-O teste PostgreSQL é uma unidade agregadora com várias asserções; o total de 35 testes não equivale a 35 integrações independentes.
+## Comportamentos verificados
 
-## Executar em qualquer sistema
+- Parsing e contratos de requisitos, erros de IA com transporte simulado, fallback interno/externo, skills obrigatórias e capacidade mínima em todos os meses.
+- Equivalência PostgreSQL/dump, importação idempotente, pedidos concorrentes sem duplicidade e preservação da base original.
+- Sessões, primeiro administrador único, login inválido e limite de tentativas, senhas com hash/salt, logout, revogação por desativação e auditoria.
+- TI sem acesso à gestão de contas, isolamento entre dois usuários TI, GP sem criar pedidos, TI sem decidir pedidos e GP validando apenas pedido pendente.
+- Evidências: níveis de skills, ausência de planejamento sinalizada, exclusão de vínculos sem planejamento anterior, horizonte previsto, ranking por evidências e ausência explícita de métricas de produtividade.
 
-```text
-npm ci
-npm test
-npm run test:coverage
-npm run build
-```
+Nenhum teste chama a API comercial de IA. O build passa nesta revisão. A suíte de CI configurada para Windows/Linux/macOS executa a parcela sem banco e o build; isso não comprova homologação remota até o workflow executar.
 
-Abra `coverage/index.html`. `coverage/lcov.info` atende ferramentas de análise; `coverage/coverage-summary.json` contém os números brutos. Cada execução de cobertura substitui o relatório anterior.
+## Limitações
 
-O comando de cobertura falha se ficar abaixo dos pisos globais configurados: 90% de linhas/instruções, 90% de ramificações e 80% de funções. Eles são compatíveis com a suíte sem banco; não exigem que um clone público tenha acesso à base restrita.
-
-Para integração: inicie PostgreSQL, disponibilize o dump em `challenge/db/01-hackathon.sql` e configure `.env.local` na raiz. Execute `npm run test:coverage:integration`. O relatório integrado depende da base oficial e não é gerado no CI público.
-
-Se as credenciais estiverem fora da raiz, defina ALOCA_ENV_FILE na sessão. Windows PowerShell: `$env:ALOCA_ENV_FILE = "C:/caminho/aloca.env"`. Linux/macOS: `export ALOCA_ENV_FILE='/caminho/aloca.env'`. Não copie valores de chaves ou senhas para o relatório.
-
-## CI e limitações
-
-O workflow `.github/workflows/ci.yml` está configurado para Ubuntu, Windows e macOS com Node.js 24: instalação pelo lockfile, suíte sem banco, cobertura, build e artefato HTML. A presença do workflow não comprova que essas execuções remotas passaram; verificar os resultados no GitHub Actions após o envio.
-
-Permanecem sem cobertura automatizada: navegação de ponta a ponta da interface, acessibilidade, carga, homologação Windows/Linux real, aprovação do GP e integrações corporativas não implementadas. Capturas do manual foram obtidas da aplicação real, mas não substituem uma suíte E2E.
-
-Ramificações ainda não executadas incluem variações de campos ausentes e caminhos de falha/importação no armazenamento. O mecanismo não deve ser apresentado como 100% homologado para produção. A auditoria das dependências de execução não reportou vulnerabilidades conhecidas na consulta desta entrega; isso não substitui revisão de segurança.
+Não há suíte automatizada E2E da interface, carga, acessibilidade ou homologação em máquinas Windows/Linux. Existem caminhos de falha e variações de dados ainda não executados. A aprovação administrativa está coberta, mas reserva no SGD e integrações corporativas não existem. O servidor continua local; não apresentar esta cobertura como garantia de segurança ou produtividade predita.

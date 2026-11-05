@@ -18,7 +18,7 @@ export function monthsFor(r: Requirement) {
   const [year, month] = r.start_month.split('-').map(Number);
   return Array.from({ length: r.duration_months }, (_, i) => { const d = new Date(Date.UTC(year, month - 1 + i, 1)); return d.toISOString().slice(0, 7); });
 }
-export function rank(profiles: Profile[], r: Requirement) {
+export function rank(profiles: Profile[], r: Requirement, limit=5) {
   const required = [...new Set(r.mandatory_skills.map(canonical))];
   return profiles.flatMap(p => {
     const skills = new Set(p.skills.map(canonical));
@@ -32,7 +32,7 @@ export function rank(profiles: Profile[], r: Requirement) {
     const score = desired.length ? Math.round(80 + desiredMatched / desired.length * 20) : 100;
     return [{ ...p, capacity, score, matched: r.mandatory_skills, desiredMatched,
       explanation: p.source === 'internal' ? `Atende às ${required.length} skills obrigatórias e mantém pelo menos ${capacity}% livres nos ${r.duration_months} meses solicitados.` : `Atende às ${required.length} skills obrigatórias. Disponibilidade declarada de ${capacity}%, sujeita a confirmação.` }];
-  }).sort((a, b) => b.score - a.score || b.capacity - a.capacity || a.name.localeCompare(b.name)).slice(0, 5);
+  }).sort((a, b) => b.score - a.score || b.capacity - a.capacity || a.name.localeCompare(b.name)).slice(0, limit);
 }
 export function matchCascade(internal: Profile[], external: Profile[], r: Requirement) {
   const candidates = rank(internal, r);
