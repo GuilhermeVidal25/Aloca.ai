@@ -3,14 +3,16 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from '
 import { dirname } from 'node:path';
 import type { Requirement, rank } from './matching.ts';
 
-export type Search = { id: string; createdAt: string; requirements: Requirement; source: string; candidates: ReturnType<typeof rank>; elapsedMs: number };
-export type Allocation = { id: string; searchId: string; candidateId: string; name: string; source: string; createdAt: string; status: string };
+export type Search = { id: string; createdAt: string; requirements: Requirement; source: string; candidates: ReturnType<typeof rank>; elapsedMs: number; ownerId?:string };
+export type Allocation = { id: string; searchId: string; candidateId: string; name: string; source: string; createdAt: string; status: string; ownerId?:string; decision?:{by:string;at:string;note:string} };
 export interface Store {
-  history(): Promise<{ searches: Search[]; allocations: Allocation[] }>;
+  history(ownerId?:string): Promise<{ searches: Search[]; allocations: Allocation[] }>;
   search(id: string): Promise<Search | undefined>;
   saveSearch(search: Search): Promise<void>;
   allocation(searchId: string, candidateId: string): Promise<Allocation | undefined>;
   saveAllocation(allocation: Allocation): Promise<{ allocation: Allocation; created: boolean }>;
+  allocationById?(id:string):Promise<Allocation|undefined>;
+  decide?(id:string,status:'validated'|'declined',decision:NonNullable<Allocation['decision']>):Promise<Allocation|undefined>;
 }
 export const migration = `
 CREATE SCHEMA IF NOT EXISTS "AlocaAI";
@@ -48,8 +50,9 @@ export class PostgresStore implements Store {
       await client.query('COMMIT');
     } catch (error) { await client.query('ROLLBACK'); throw error; } finally { client.release(); }
   }
-  async history() {
-    const [s,a] = await Promise.all([this.db.query('SELECT payload FROM "AlocaAI".searches ORDER BY created_at DESC LIMIT 100'),this.db.query('SELECT payload FROM "AlocaAI".allocation_requests ORDER BY created_at DESC LIMIT 100')]);
+  async history(ownerId?:string) {
+    const where=ownerId?" WHERE payload->>'ownerId'=$1":'';const args=ownerId?[ownerId]:[];
+    const [s,a] = await Promise.all([this.db.query('SELECT payload FROM "AlocaAI".searches'+where+' ORDER BY created_at DESC LIMIT 100',args),this.db.query('SELECT payload FROM "AlocaAI".allocation_requests'+where+' ORDER BY created_at DESC LIMIT 100',args)]);
     return { searches: s.rows.map(r => r.payload as Search), allocations: a.rows.map(r => r.payload as Allocation) };
   }
   async search(id: string) { return (await this.db.query('SELECT payload FROM "AlocaAI".searches WHERE id=$1',[id])).rows[0]?.payload as Search | undefined; }
@@ -60,13 +63,15 @@ export class PostgresStore implements Store {
     if (inserted.rowCount) return { allocation: inserted.rows[0].payload as Allocation, created: true };
     return { allocation: (await this.allocation(a.searchId,a.candidateId))!, created: false };
   }
+  async allocationById(id:string){return (await this.db.query('SELECT payload FROM "AlocaAI".allocation_requests WHERE id=$1',[id])).rows[0]?.payload as Allocation|undefined;}
+  async decide(id:string,status:'validated'|'declined',decision:NonNullable<Allocation['decision']>){const r=await this.db.query(`UPDATE "AlocaAI".allocation_requests SET payload=payload || $2::jsonb WHERE id=$1 AND payload->>'status'='pending' RETURNING payload`,[id,{status,decision}]);return r.rows[0]?.payload as Allocation|undefined;}
 }
 
 export class FileStore implements Store {
   private data: { searches: Search[]; allocations: Allocation[] };
   constructor(private path: string) { this.data = existsSync(path) ? JSON.parse(readFileSync(path,'utf8')) : { searches: [], allocations: [] }; }
   private persist() { mkdirSync(dirname(this.path),{ recursive:true });writeFileSync(this.path+'.tmp',JSON.stringify(this.data),{ mode:0o600 });renameSync(this.path+'.tmp',this.path); }
-  async history() { return { searches:this.data.searches.slice(0,100),allocations:this.data.allocations.slice(0,100) }; }
+  async history(ownerId?:string) { return { searches:this.data.searches.filter(s=>!ownerId||s.ownerId===ownerId).slice(0,100),allocations:this.data.allocations.filter(a=>!ownerId||a.ownerId===ownerId).slice(0,100) }; }
   async search(id: string) { return this.data.searches.find(s => s.id===id); }
   async saveSearch(s: Search) { this.data.searches.unshift(s);this.persist(); }
   async allocation(searchId: string,candidateId: string) { return this.data.allocations.find(a => a.searchId===searchId && a.candidateId===candidateId); }

@@ -6,6 +6,7 @@ import { getPool, internalProfiles, externalProfiles } from './database.ts';
 import { dumpProfiles } from './dump.ts';
 import { rank, Requirements } from './matching.ts';
 import { PostgresStore, type Search } from './storage.ts';
+import {candidateEvidence} from './evidence.ts';
 
 const envFile=process.env.ALOCA_ENV_FILE || resolve('.env.local');
 if(existsSync(envFile))process.loadEnvFile(envFile);
@@ -26,6 +27,7 @@ try {
     assert.deepEqual(summarize(actual),summarize(expected));assert.deepEqual(summarize(external),summarize(expectedExt));
     assert.ok(actual.length+external.length>0);
     console.log(`${r.title}: PostgreSQL e dump equivalentes; origem ${actual.length?'interna':'externa'}; ${actual.length+external.length} candidatos`);
+    const grounded=await candidateEvidence(actual.length?actual:external,r);assert.ok(grounded.every(c=>(c as any).evidence.productivity.status==='unavailable'));assert.ok(grounded.every(c=>Array.isArray((c as any).evidence.technical)));
     const search:Search={id:randomUUID(),createdAt:new Date().toISOString(),requirements:r,source:actual.length?'internal':'external',candidates:actual.length?actual:external,elapsedMs:0};ids.push(search.id);
     await store.saveSearch(search);assert.equal((await new PostgresStore(db).search(search.id))?.id,search.id);
     const candidate=search.candidates[0];

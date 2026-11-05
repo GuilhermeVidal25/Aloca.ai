@@ -18,7 +18,7 @@ Nos três sistemas, `npm run start:local` inicia banco e aplicação. No macOS, 
 
 O rodapé identifica **PostgreSQL conectado**. Não há dados inventados na busca: as consultas usam a base fornecida pelo desafio. Isso não representa uma integração ativa com os sistemas da VINT_GLOBAL. Chaves, base do desafio e histórico de uso não são distribuídos neste repositório.
 
-A configuração do banco fica em `DATABASE_URL`. A imagem e o dump ficam em `challenge/`, ignorado pelo Git. O banco é exposto somente em loopback. Para demonstração offline sem Docker, execute `npm run start:snapshot`; nesse modo, o rodapé identifica **Base do desafio · SQL** e não há troca silenciosa de fonte.
+A configuração do banco fica em `DATABASE_URL`. A imagem e o dump ficam em `challenge/`, ignorado pelo Git. O banco é exposto somente em loopback. O modo `npm run start:snapshot` usa o dump para consulta de perfis; autenticação e solicitações continuam exigindo PostgreSQL. O rodapé identifica **Base do desafio · SQL**, sem troca silenciosa de fonte.
 
 ## Fluxo
 
@@ -28,7 +28,7 @@ A configuração do banco fica em `DATABASE_URL`. A imagem e o dump ficam em `ch
 4. Consultar talentos externos somente se não houver internos elegíveis.
 5. Registrar a solicitação. O histórico e os pedidos ficam no schema `"AlocaAI"` do PostgreSQL, separado das tabelas originais `"InHire"`. O arquivo legado `data/history.json` é importado sem apagar o original. No modo snapshot, a persistência continua em arquivo.
 
-O MVP não efetiva alocações: pedidos ficam pendentes e não reservam capacidade. A aprovação do GP é simulada. A capacidade é derivada dos planejamentos; conforme a função fornecida no desafio, ausência de planejamento individual é tratada como zero alocação. Meses sem cobertura global são bloqueados. A confirmação do GP continua necessária.
+O MVP não efetiva alocações: pedidos ficam pendentes e não reservam capacidade. GP e administrador podem validar ou recusar o pedido com justificativa. Essa decisão administrativa não modifica o SGD nem reserva capacidade. A capacidade é derivada dos planejamentos; conforme a função fornecida no desafio, ausência de planejamento individual é tratada como zero alocação. Meses sem cobertura global são bloqueados. A confirmação do GP continua necessária.
 
 ## IA
 
@@ -60,4 +60,10 @@ Contrato dos endpoints e códigos de erro: [docs/api.md](docs/api.md).
 
 ## Limites
 
-Aplicação local para demonstração. Não inclui autenticação multiusuário, aprovação real, integrações de mensageria, embeddings ou predição de produtividade. Ranking inicial por skills obrigatórias, cobertura de desejáveis e capacidade; não representa probabilidade de sucesso nem avaliação de desempenho.
+Aplicação local para demonstração, com autenticação e autorização por perfil. Não inclui reserva efetiva no SGD, mensageria, embeddings ou predição de produtividade. O ranking considera cobertura de desejáveis, níveis de skills obrigatórias, evidências de projetos com horizonte semelhante, planejamento documentado e capacidade. Não representa probabilidade de sucesso nem avaliação de desempenho.
+
+## Acesso e evidências
+
+No primeiro acesso, crie o administrador pela própria tela, com senha de 12 a 128 caracteres. Não há conta ou senha padrão. O administrador cadastra os perfis **TI**, **GP** e **Administrador**. Veja [acesso e evidências](docs/acesso-e-evidencias.md).
+
+O manual PDF existente corresponde à versão anterior à autenticação. Para os fluxos atuais, consulte a documentação Markdown.

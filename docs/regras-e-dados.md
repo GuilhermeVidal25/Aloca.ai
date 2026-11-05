@@ -12,7 +12,7 @@ Título de 1 a 120 caracteres; de 1 a 20 skills obrigatórias; até 20 desejáve
 - Talentos precisam declarar disponibilidade suficiente. Valor ausente é desconhecido e não é considerado elegível.
 - Desejáveis aumentam a nota, mas não eliminam candidatos.
 - Com desejáveis, a nota é `80 + 20 × (desejáveis atendidas / desejáveis pedidas)`. Sem desejáveis, os elegíveis recebem 100. Não é uma previsão de sucesso nem uma nota de produtividade.
-- Ordenação: nota decrescente, capacidade decrescente, nome em ordem alfabética. Retorno limitado a cinco.
+- Ordenação: cobertura de desejáveis, obrigatórias em nível avançado/intermediário, projetos relacionados de horizonte semelhante, meses com planejamento individual, capacidade e nome. Retorno limitado a cinco.
 - Se existe interno elegível, não se consulta a base externa. Sem internos, avaliam-se talentos. Sem ambos, a resposta é vazia.
 
 Exemplos de equivalência: Node/Node.js; TS/TypeScript; Postgre/Postgres/PostgreSQL; React.js/React; JS/JavaScript. NestJS e Express não são automaticamente aceitos como comprovação de Node.js neste MVP.
@@ -39,10 +39,10 @@ Ausência de registro individual conta como zero alocação, conforme as funçõ
 | `talentos` | Cadastro externo, senioridade e disponibilidade declarada |
 | `talento_skills` | Talento → skill e nível |
 
-A consulta atual usa presença de skills; não exige um nível mínimo de conhecimento. Cargo não é filtro implementado no contrato atual. Contratos, demandas e seus vínculos existem na base, mas não geram uma métrica de desempenho ou de experiência no card.
+A consulta atual usa presença de skills; não exige um nível mínimo de conhecimento. Cargo não é filtro implementado no contrato atual. Demandas com planejamento anterior geram evidências de contexto e horizonte previsto; não comprovam desempenho.
 
 ## Persistência AlocaAI
 
-`searches`: UUID, data da consulta e JSONB com requisitos, origem, candidatos, justificativas e tempo. `allocation_requests`: UUID, referência à consulta, candidato, data e JSONB com nome, origem e status `pending`. Restrição única: `(search_id, candidate_id)`. Listagens retornam até 100 registros recentes, sem apagar os demais do banco.
+`searches`: UUID, data da consulta e JSONB com requisitos, origem, candidatos, justificativas e tempo. `allocation_requests`: UUID, referência à consulta, candidato, data e JSONB com nome, origem e status `pending`, `validated` ou `declined`, com proprietário e decisão justificada. Restrição única: `(search_id, candidate_id)`. Listagens retornam até 100 registros recentes, sem apagar os demais do banco.
 
-No modo snapshot, os mesmos contratos ficam em `data/history.json`. Esse modo atende a um único processo local, sem a garantia de concorrência entre múltiplos processos oferecida pelo PostgreSQL.
+No modo snapshot, apenas os perfis vêm do dump. PostgreSQL continua armazenando contas, sessões, auditoria, consultas e solicitações. O arquivo legado pode ser importado, mas não é o armazenamento usado pelo servidor.

@@ -98,7 +98,7 @@ ALOCA_ENV_FILE='/home/seu_usuario/config/aloca.env' npm run dev
 
 ## 5. Modo snapshot e compilação
 
-`npm run start:snapshot` lê o dump original, dispensa Docker e grava histórico local em arquivo. O rodapé mostra **Base do desafio · SQL**. Não reflete alterações em um banco ativo. A IA ainda depende de internet e de cota; a entrada manual não.
+`npm run start:snapshot` lê o dump original para os perfis. Exige PostgreSQL já disponível para autenticação, histórico e solicitações; o iniciador nesse modo não sobe Docker automaticamente. O rodapé mostra **Base do desafio · SQL**. Não reflete alterações em um banco ativo. A IA ainda depende de internet e de cota; a entrada manual não.
 
 Para executar a compilação local: `npm run build` e depois `npm start`. O banco deve estar pronto; `npm start` não inicia Docker. Essa execução continua em loopback e não equivale a uma implantação corporativa.
 

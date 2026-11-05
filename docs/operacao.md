@@ -27,7 +27,7 @@ Não use `docker compose down -v` como diagnóstico: ele apaga o volume. O dump 
 | Período sem dados | Escolha competências cobertas pelos planejamentos. Não trate esse erro como ausência de profissionais. |
 | Nenhum candidato | Confira skills obrigatórias, senioridade exata e dedicação em todos os meses. Critérios só devem ser flexibilizados conscientemente. |
 | Pedido retorna 409 | A capacidade ou elegibilidade mudou. Faça uma nova consulta. |
-| Histórico vazio | Confira se está no modo PostgreSQL ou snapshot e no mesmo banco/arquivo da sessão anterior. |
+| Histórico vazio | Confira a conta autenticada (TI vê apenas o próprio histórico) e o banco configurado. |
 
 `GET /api/health` confirma que o processo responde. `GET /api/status` informa conexão, fonte, persistência e configuração da IA. Ao investigar uma falha, guarde `X-Request-Id` e o código, sem incluir credenciais nos logs ou capturas.
 
@@ -35,13 +35,13 @@ Não use `docker compose down -v` como diagnóstico: ele apaga o volume. O dump 
 
 Para PostgreSQL, mantenha backup administrado do banco `hackathon`, incluindo `InHire` e `AlocaAI`. Em ambientes corporativos, use o procedimento de backup da infraestrutura e teste a restauração em um banco separado. Não restaure sobre a base de demonstração sem avaliar o impacto.
 
-No snapshot, preserve o dump e `data/history.json` com o servidor parado. Esse arquivo pode conter nomes e requisitos de projetos; não deve entrar no repositório. A importação do histórico legado no PostgreSQL mantém o arquivo original e evita registros repetidos pelo ID.
+No snapshot, preserve o dump e faça backup do schema AlocaAI no PostgreSQL. O arquivo legado data/history.json também pode conter nomes e requisitos de projetos; não deve entrar no repositório. A importação do histórico legado no PostgreSQL mantém o arquivo original e evita registros repetidos pelo ID.
 
 ## Credenciais e dados
 
 `.env.local`, `.env.runtime`, `challenge/`, `data/`, `node_modules/`, `dist/` e `coverage/` são ignorados pelo Git. `.env.example` contém somente opções e campos sem segredos. O provedor recebe o texto da demanda: evite incluir informações confidenciais desnecessárias. As chaves ficam no backend; trocar de modelo não altera as regras determinísticas.
 
-Antes de uso corporativo real, implementar autenticação, autorização, segregação de dados, gestão central de segredos, retenção, observabilidade e aprovação real. A proteção de origem atual é uma medida local e não substitui autenticação. A API não deve ser exposta publicamente no estado do MVP.
+O MVP possui autenticação, autorização por perfil e histórico segregado de TI. Antes de implantação corporativa, integrar SSO, recuperação de senha, HTTPS, gestão central de segredos, retenção e observabilidade. O servidor continua em loopback; a validação administrativa do GP não substitui reserva transacional no SGD.
 
 ## Evolução prevista, não entregue
 

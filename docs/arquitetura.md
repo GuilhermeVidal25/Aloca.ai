@@ -7,10 +7,12 @@
 | Interface | `src/main.tsx`, `src/style.css` | Chat, critérios, cards, histórico e pedidos |
 | Inicialização | `scripts/start.mjs`, `server/index.ts` | Ambiente, banco, persistência, Vite e servidor |
 | API | `server/app.ts` | Contratos HTTP, orquestração, erros e origem |
+| Segurança | `server/auth.ts`, `src/Access.tsx` | Contas, sessões, perfis e auditoria |
+| Evidências | `server/evidence.ts`, `src/Evidence.tsx` | Profundidade técnica, contexto anterior e capacidade documentada |
 | IA | `server/ai.ts` | Adaptadores Gemini/OpenAI, JSON estruturado e Zod |
 | Regras | `server/matching.ts` | Normalização, elegibilidade, notas e ordenação |
 | Fonte | `server/database.ts`, `server/dump.ts` | Consulta PostgreSQL ou leitura explícita do snapshot |
-| Persistência | `server/storage.ts` | Schema AlocaAI ou arquivo no modo snapshot |
+| Persistência | `server/storage.ts` | Schema AlocaAI (também no modo snapshot) |
 
 ```mermaid
 sequenceDiagram
@@ -45,6 +47,6 @@ sequenceDiagram
 
 ## Execução e fronteiras
 
-Express e Vite compartilham a porta em desenvolvimento. Na compilação, Express serve `dist/`. O servidor escuta em `127.0.0.1`; Docker publica PostgreSQL também somente em loopback. Não há login, perfis de acesso, multitenancy nem trilha de aprovação real.
+Express e Vite compartilham a porta em desenvolvimento. Na compilação, Express serve `dist/`. O servidor escuta em `127.0.0.1`; Docker publica PostgreSQL também somente em loopback. Há login e três perfis, sessões de oito horas e decisão administrativa auditada. Não há multitenancy ou reserva efetiva de capacidade.
 
 Somente a descrição digitada é enviada ao provedor selecionado. Perfis, histórico e resultados permanecem locais. A interface nunca recebe a chave. `/api/status` informa configuração, não garante disponibilidade nem saldo da IA. O adaptador rejeita respostas inválidas, bloqueadas e incompletas. Não há troca automática de provedor.

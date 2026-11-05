@@ -52,7 +52,7 @@ Se a competência não tem planejamento, aparece uma mensagem de período sem da
 
 ## Fluxo 6 - Solicitações e repetição
 
-Ao solicitar, a API verifica novamente o perfil. Se ainda elegível, grava o pedido e desabilita a ação com indicação de registro. Repetir a chamada para a mesma consulta e candidato devolve o mesmo pedido. O menu **Solicitações** mostra o estado pendente. Não há botões de aprovação/recusa pelo GP no MVP.
+Ao solicitar, a API verifica novamente o perfil. Se ainda elegível, grava o pedido e desabilita a ação com indicação de registro. Repetir a chamada para a mesma consulta e candidato devolve o mesmo pedido. O menu **Solicitações** mostra o estado pendente. GP e administrador visualizam botões de validação/recusa, com justificativa obrigatória. A validação reconsulta a elegibilidade e não efetiva alocação no SGD.
 
 Pedidos para consultas diferentes não são tratados como duplicados. Eles também não reduzem a disponibilidade. A liberação real precisa ser coordenada fora do protótipo.
 
@@ -76,4 +76,4 @@ Para novembro de 2026 a janeiro de 2027, com senioridade não exigida:
 | Externo | Delphi, C# | 100% | Um talento externo |
 | Vazio | Skill inexistente de teste | 50% | Sem candidatos |
 
-Esses resultados dependem da versão e das condições da base. Confirme os exemplos antes da apresentação. A demonstração deve encerrar explicando que a aprovação é simulada e que o uso ainda é local.
+Esses resultados dependem da versão e das condições da base. Confirme os exemplos antes da apresentação. A demonstração deve explicar que a decisão do GP é persistida, mas a reserva no SGD não é efetuada, e que o uso ainda é local.
