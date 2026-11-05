@@ -10,3 +10,22 @@ test('exclui skill obrigatória ausente', () => assert.equal(rank([p], { ...r, m
 test('exclui período incompleto', () => assert.equal(rank([{ ...p, months: p.months.slice(1) }], r).length, 0));
 test('prioriza interno e usa externo apenas se necessário', () => { const ext: Profile = { ...p, id: '2', source: 'external', availability: 100, months: [] }; assert.equal(matchCascade([p], [ext], r).source, 'internal'); assert.equal(matchCascade([], [ext], r).candidates[0].id, '2'); });
 test('talento sem disponibilidade confirmada é excluído', () => assert.equal(rank([{ ...p, source: 'external', availability: null }], r).length, 0));
+test('senioridade é eliminatória e ignora acentos/caixa',()=>{
+  assert.equal(rank([p],{...r,seniority:'Sênior'}).length,0);
+  assert.equal(rank([{...p,seniority:'Sênior'}],{...r,seniority:'senior'}).length,1);
+});
+test('desejável pontua sem excluir perfil que atende às obrigatórias',()=>{
+  const ranked=rank([{...p,id:'2',skills:['Node.js','Docker']},p],{...r,desired_skills:['Docker']});
+  assert.equal(ranked.length,2);assert.equal(ranked[0].id,'2');assert.equal(ranked[0].score,100);assert.equal(ranked[1].score,80);
+});
+test('capacidade desempata; resultado limita a cinco sem duplicar equivalências',()=>{
+  const profiles=Array.from({length:8},(_,i)=>({...p,id:String(i),name:'Perfil '+i,months:p.months.map(m=>({...m,free:60+i}))}));
+  const ranked=rank(profiles,{...r,mandatory_skills:['Node','Node.js']});assert.equal(ranked.length,5);assert.equal(ranked[0].id,'7');assert.equal(ranked[0].explanation.startsWith('Atende às 1 skills'),true);
+});
+test('sobre-alocação e ausência total de planejamento são inelegíveis',()=>{
+  assert.equal(rank([{...p,months:p.months.map(m=>({...m,free:-10}))}],r).length,0);
+  assert.equal(rank([{...p,months:[]}],r).length,0);
+});
+test('contrato rejeita pedido vazio, meses inválidos e campos não previstos',()=>{
+  for(const value of [{...r,mandatory_skills:[]},{...r,min_availability:0},{...r,start_month:'2026-13'},{...r,duration_months:13},{...r,force:true}])assert.equal(Requirements.safeParse(value).success,false);
+});

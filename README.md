@@ -2,6 +2,8 @@
 
 Assistente de alocação para a equipe de TI da VINT_GLOBAL. Projeto autoral desenvolvido para o hackathon.
 
+Documentação completa: [índice](docs/README.md), [instalação Windows/Linux/macOS](docs/instalacao.md), [manual de fluxos](docs/fluxos.md), [manual em PDF](output/pdf/aloca-ai-manual-da-plataforma.pdf) e [testes e cobertura](docs/testes.md).
+
 ## Executar
 
 Requisitos: Node.js 22+, npm e Docker com Compose para o modo PostgreSQL.
@@ -12,11 +14,11 @@ Requisitos: Node.js 22+, npm e Docker com Compose para o modo PostgreSQL.
 4. Execute `docker compose up -d --wait` para importar o banco na primeira execução.
 5. Execute `npm run dev`. A aplicação fica em http://localhost:3000.
 
-No macOS, depois da configuração, também é possível abrir `Iniciar.command`. Para ler um arquivo de credenciais fora do repositório, defina `ALOCA_ENV_FILE`; o iniciador também aceita um arquivo local ignorado `.env.runtime` contendo `export ALOCA_ENV_FILE='/caminho/para/.env.local'`.
+Nos três sistemas, `npm run start:local` inicia banco e aplicação. No macOS, `Iniciar.command` é um atalho opcional para o mesmo iniciador Node. Credenciais fora da raiz podem ser configuradas em `.env.runtime` com `ALOCA_ENV_FILE="/caminho/para/.env.local"`; no Windows use um caminho como `C:/Users/usuario/config/aloca.env`. Consulte o guia de instalação para PowerShell e Linux/macOS.
 
 O rodapé identifica **PostgreSQL conectado**. Não há dados inventados na busca: as consultas usam a base fornecida pelo desafio. Isso não representa uma integração ativa com os sistemas da VINT_GLOBAL. Chaves, base do desafio e histórico de uso não são distribuídos neste repositório.
 
-A configuração do banco fica em `DATABASE_URL`. A imagem e o dump ficam em `challenge/`, ignorado pelo Git. O banco é exposto somente em loopback. Para demonstração offline sem Docker, execute `./Iniciar.command --snapshot`; nesse modo, o rodapé identifica **Base do desafio · SQL** e não há troca silenciosa de fonte.
+A configuração do banco fica em `DATABASE_URL`. A imagem e o dump ficam em `challenge/`, ignorado pelo Git. O banco é exposto somente em loopback. Para demonstração offline sem Docker, execute `npm run start:snapshot`; nesse modo, o rodapé identifica **Base do desafio · SQL** e não há troca silenciosa de fonte.
 
 ## Fluxo
 

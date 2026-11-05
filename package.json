@@ -6,8 +6,12 @@
   "scripts": {
     "dev": "node --import tsx server/index.ts",
     "build": "tsc --noEmit && vite build",
-    "start": "NODE_ENV=production node --import tsx server/index.ts",
+    "start": "node scripts/start.mjs --production --no-docker",
+    "start:local": "node scripts/start.mjs",
+    "start:snapshot": "node scripts/start.mjs --snapshot",
     "test": "node --import tsx --test server/*.test.ts",
+    "test:coverage": "node scripts/coverage.mjs",
+    "test:coverage:integration": "node scripts/coverage.mjs --postgres",
     "verify:postgres": "node --import tsx server/verify-postgres.ts"
   },
   "dependencies": {
@@ -24,6 +28,7 @@
     "@types/pg": "^8.15.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "c8": "^9.1.0",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0",
     "vite": "^7.0.0"

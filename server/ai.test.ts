@@ -56,3 +56,33 @@ test('OpenAI: adaptador alternativo mantém o contrato sem uso real da API',asyn
   });
   assert.deepEqual(await parse('teste'),requirement);
 });
+
+test('IA: HTTP 401/403/404/500, JSON inválido, timeout e respostas incompletas',async()=>{
+  for(const [status,code] of [[401,'AI_ACCESS_DENIED'],[403,'AI_ACCESS_DENIED'],[404,'AI_MODEL_UNAVAILABLE'],[500,'AI_UNAVAILABLE']] as const){
+    const parse=createRequirementsParser(config,async()=>Response.json({error:{}},{status}));await assert.rejects(parse('teste'),(e:ApiError)=>e.code===code);
+  }
+  const malformed=createRequirementsParser(config,async()=>new Response('sem json'));
+  await assert.rejects(malformed('teste'),(e:ApiError)=>e.code==='AI_INCOMPLETE_RESPONSE');
+  const invalidText=createRequirementsParser(config,async()=>Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:'incompleto {'}]}}]}));
+  await assert.rejects(invalidText('teste'),(e:ApiError)=>e.code==='AI_INVALID_RESPONSE');
+  const timeout=createRequirementsParser(config,async()=>{throw new DOMException('Timeout','TimeoutError');});
+  await assert.rejects(timeout('teste'),(e:Error)=>e.name==='TimeoutError');
+  for(const [payload,code] of [[{status:'incomplete'},'AI_INCOMPLETE_RESPONSE'],[{output:[]},'AI_INVALID_RESPONSE']] as const){
+    const parse=createRequirementsParser({...config,provider:'openai'},async()=>Response.json(payload));await assert.rejects(parse('teste'),(e:ApiError)=>e.code===code);
+  }
+  const quota=createRequirementsParser({...config,provider:'openai'},async()=>Response.json({error:{type:'insufficient_quota'}},{status:429}));
+  await assert.rejects(quota('teste'),(e:ApiError)=>e.code==='AI_QUOTA_EXHAUSTED');
+});
+
+test('IA: seleção de provedor, configuração pública e wrapper sem expor credenciais',async t=>{
+  const {aiStatus,parseRequirements}=await import('./ai.ts');
+  const names=['LLM_PROVIDER','GEMINI_API_KEY','GEMINI_MODEL','OPENAI_API_KEY','OPENAI_MODEL'];const old=Object.fromEntries(names.map(n=>[n,process.env[n]]));
+  t.after(()=>{for(const n of names)if(old[n]===undefined)delete process.env[n];else process.env[n]=old[n];});
+  for(const n of names)delete process.env[n];
+  assert.equal(aiStatus().provider,'openai');assert.equal(aiStatus().aiConfigured,false);
+  process.env.GEMINI_API_KEY='dummy-local-test';assert.equal(aiStatus().provider,'gemini');assert.ok(!JSON.stringify(aiStatus()).includes('dummy-local-test'));
+  t.mock.method(globalThis,'fetch',async()=>Response.json(result(requirement)));
+  assert.deepEqual(await parseRequirements('Preciso de Node.js'),requirement);
+  process.env.LLM_PROVIDER='openai';process.env.OPENAI_MODEL='modelo-teste';assert.equal(aiStatus().model,'modelo-teste');
+  process.env.LLM_PROVIDER='inexistente';assert.throws(()=>aiStatus(),(e:ApiError)=>e.code==='AI_PROVIDER_INVALID');
+});

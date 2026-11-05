@@ -6,3 +6,7 @@ data/
 *.log
 .DS_Store
 challenge/
+coverage/
+.nyc_output/
+tmp/
+__pycache__/

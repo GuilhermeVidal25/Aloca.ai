@@ -60,3 +60,19 @@ test('HTTP: JSON inválido e origem externa são rejeitados',async t=>{
   const invalid=await fetch(base+'chat/match',{method:'POST',headers:{'Content-Type':'application/json'},body:'{'});assert.equal(invalid.status,400);assert.equal((await invalid.json()).code,'INVALID_JSON');
   const foreign=await fetch(base+'history',{headers:{Origin:'https://untrusted.example'}});assert.equal(foreign.status,403);
 });
+
+test('HTTP: health, status, rota inexistente, timeout, competência e corpo grande',async t=>{
+  const {request,base}=await setup(t,{internal:async()=>{throw Object.assign(new Error('Período sem dados'),{status:422});},parse:async()=>{throw new DOMException('Timeout','TimeoutError');}});
+  assert.equal((await request('health')).data.status,'ok');assert.equal((await request('status')).data.database,true);
+  assert.equal((await request('inexistente')).status,404);
+  assert.equal((await request('chat/match',requirements)).data.code,'PERIOD_NOT_COVERED');
+  assert.equal((await request('chat/parse',{message:'Uma mensagem para teste'})).status,504);
+  const large=await fetch(base+'chat/parse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:'x'.repeat(25000)})});assert.equal(large.status,413);
+});
+test('HTTP: parse entrega critérios e pedido externo fica pendente sem reservar',async t=>{
+  const {request}=await setup(t,{internal:async()=>[],external:async()=>[{...person,source:'external',availability:80,months:[]}]});
+  assert.deepEqual((await request('chat/parse',{message:'Preciso de Node.js'})).data,requirements);
+  const search=await request('chat/match',requirements);const body={searchId:search.data.id,candidateId:person.id};
+  const a=await request('allocations/request',body);assert.equal(a.status,201);assert.equal(a.data.status,'pending');assert.equal(a.data.source,'external');
+  const b=await request('allocations/request',body);assert.equal(b.status,200);assert.equal(b.data.id,a.data.id);
+});
